@@ -1,0 +1,41 @@
+Before you can do the script:
+
+**Step 1.  create pedigree folder in /vcf folder, create PED file**
+
+Example:
+
+```bash
+*# Navigate to the pedigree directory (adjust if needed)*
+cd /home/rp793/rds/rds-dog-de-novo-mXW0tnsCK5M/data/dogtest/MS-1/vcf/pedigree
+
+*# Create the .ped file with tab-separated entries*
+echo -e "MS-1\tERR11203027\t0\t0\t1\t-9" > MS-1.ped
+echo -e "MS-1\tERR11203028\t0\t0\t2\t-9" >> MS-1.ped
+echo -e "MS-1\tERR11203029\tERR11203027\tERR11203028\t0\t-9" >> MS-1.ped
+```
+
+```bash
+# Create the .ped file with tab-separated entries
+echo -e "MS-2\tERR11203033\t0\t0\t1\t-9" > MS-2.ped
+echo -e "MS-2\tERR11203034\t0\t0\t2\t-9" >> MS-2.ped
+echo -e "MS-2\tERR11203031\tERR11203033\tERR11203034\t0\t-9" >> MS-2.ped
+echo -e "MS-2\tERR11203032\tERR11203033\tERR11203034\t0\t-9" >> MS-2.ped
+```
+
+FamilyID  IndividualID  FatherID  MotherID  Sex  Phenotyp
+MS-1    ERR11203027    0    0    1    -9
+MS-1    ERR11203028    0    0    2    -9
+MS-1    ERR11203029    ERR11203027    ERR11203028    0    -9
+
+**Step 2.  tabix index**
+
+```bash
+module load bcftools
+cd /home/rp793/rds/rds-dog-de-novo-mXW0tnsCK5M/data/dogtest/GS-1/vcf
+tabix -p vcf ERR3284984.hardfiltered.snps.vcf.gz
+tabix -p vcf ERR3284983.hardfiltered.snps.vcf.gz
+tabix -p vcf ERR3284981.hardfiltered.snps.vcf.gz
+tabix -p vcf ERR3284982.hardfiltered.snps.vcf.gz`
+```
+
+**Step 3. Run masterscript**
