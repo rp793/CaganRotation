@@ -1,0 +1,107 @@
+count how often the de novo SNV appeared on the same or opposite haplotype as the inherited variant,---
+title: "R Notebook"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+
+**Goal:**Calling de novo mutations in dog trios provided by the Mellersh lab, with the aim of comparing paternal de novo mutation rates to what we observe from targeted NanoSeq data generated from dog sperm
+
+
+**Workflow:** 
+Download trio data from ENA -> For each dog map reads using bwa mem -> call variants using GATK (actually several steps) -> filter variants (including manual inspection of suspected variant calls in IGV)
+
+**Step 1:**
+Download calls from ENA
+
+Below is an example of a Slurm script (sbatch) to download your specified FASTQ files from ENA on the Cambridge HPC. The script uses wget to download the files, and each download is run as a separate Slurm task for better scalability.
+
+```{r}
+
+```
+
+
+1. Make a file with the links:
+```{bash}
+echo "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR136/087/ERR13658287/ERR13658287_1.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR136/088/ERR13658288/ERR13658288_1.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR136/090/ERR13658290/ERR13658290_1.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR136/093/ERR13658293/ERR13658293_1.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR112/027/ERR11203027/ERR11203027_2.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR112/028/ERR11203028/ERR11203028_2.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR112/031/ERR11203031/ERR11203031_2.fastq.gz
+ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR112/033/ERR11203033/ERR11203033_2.fastq.gz" > fastq_links_edit.txt
+```
+
+2. Write the Slurm Submission Script
+
+nano download_fastq.sh
+# The nano command creates a new file where we can copy in the text below. This will be the script that opens the fastq_links.txt file and submits the jobs via sbatch so the downloads can be managed by SLURM.
+```{bash}
+
+#!/bin/bash
+#SBATCH --job-name=download_fastq       # Job name
+#SBATCH --output=download_fastq_%A_%a.out  # Output log (%A = job ID, %a = array task ID)
+#SBATCH --error=download_fastq_%A_%a.err   # Error log
+#SBATCH --array=1-8                    # Number of tasks (match the number of links)
+#SBATCH --time=01:00:00                 # Time limit (HH:MM:SS)
+#SBATCH --ntasks=1                      # Number of tasks per array job
+#SBATCH --cpus-per-task=1               # Number of CPUs per task
+#SBATCH --mem=1G                        # Memory per task
+
+# Load necessary modules (if wget is part of a module, otherwise skip)
+# module load wget
+
+# Read the FTP link corresponding to the current task ID
+FTP_LINK=$(sed -n "${SLURM_ARRAY_TASK_ID}p" fastq_links_edit.txt)
+
+# Directory to store the downloaded files
+OUTPUT_DIR= /home/rp793/rds/rds-dog-de-novo-mXW0tnsCK5M/data/dogtest
+
+# Create the output directory if it doesn't exist
+mkdir -p ${OUTPUT_DIR}
+
+# Download the file
+wget -P ${OUTPUT_DIR} ${FTP_LINK}
+
+```
+
+
+3. Submit the job:
+```{bash}
+sbatch download_fastq.sh
+```
+#Submitted batch job  4626649 03Feb25
+
+4.  Explanation of the Script
+
+```{bash}
+#SBATCH --array=1-3: Creates a job array with 3 tasks (one for each FTP link).
+FTP_LINK=$(sed -n "${SLURM_ARRAY_TASK_ID}p" fastq_links.txt): Extracts the FTP link for the current task ID.
+wget -P ${OUTPUT_DIR} ${FTP_LINK}: Downloads the file to the specified output directory.
+```
+
+5. Check job status:
+```{bash}
+squeue -u $USER
+```
+
+6. Check Output and Errors
+```{bash}
+download_fastq_<jobID>_<taskID>.out (standard output)
+download_fastq_<jobID>_<taskID>.err (error output)
+```
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file). 
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
